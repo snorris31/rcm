@@ -1,0 +1,77 @@
+<html>
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/jstree.min.js"></script>
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/themes/default/style.min.css" />
+  <script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+  <style>
+   #line1 { 
+    color: red;
+  }
+  .line2 { 
+    color: green; 
+  }
+  </style>
+ <div class = "container">
+	<h1> PR Details </h1>
+	<h3> [Shows the updates made from the previous revision to this one] </h3>
+</div>
+<br> </br>
+<div class = "container">
+	<div class = "jumbotron" id = "jtree">
+  <ul>
+    <li id = "buildname">
+      <ul>
+        <li>Repository: junos-2009/junos/ddl
+        	<ul>
+        		<li> Info: Default application configuration using XAPP DSL </li>
+        		<li> Version: v/master/0.0.47.0 </li>
+        	</ul>
+        </li>
+        <li>Repository: lfmd
+          <ul>
+            <li> Info: Default application configuration using XAPP DSL</li> 
+            <li> Version: v/master/0.0.335.0 </li>
+          </ul>
+          </li>
+        <li class = "line2">Repository: junos-2009/pfe-shared
+        	<ul>
+        		<li> Info: Default application configuration using XAPP DSL </li>
+        		<li> Version: v/master/0.0.33.0 </li>
+        		<li> Status: ADDED
+        	</ul>
+        </li>
+        <li>Repository: libddx-consumer
+        	<ul> 
+        	 <li> Info: Default application configuration using XAPP DSL</li> 
+            <li> Version: v/master/0.0.335.0 </li>
+            </ul>
+        </li>
+        <li id = 'line1'> Repository: ddc-evl
+        	<ul>
+        		<li> Info: Default application configuration using XAPP DSL </li>
+        		<li> Version: v/master/0.0.33.0 </li>
+        		<li> Status: DEPRECATED
+        	</ul></li>
+      </ul>
+    </li>
+  </ul>
+  	</div>
+  </div>
+	<script>
+	      $(function() {
+        $('#jtree').jstree({
+            "core": {
+              "themes":{
+                "icons":false
+              }
+            }
+        });
+      });
+  var urlParameter = new URLSearchParams(window.location.search);
+  console.log(window.location.search);
+  document.getElementById("buildname").innerHTML = urlParameter.get('build');
+      </script>
+</html>

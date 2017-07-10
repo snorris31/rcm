@@ -1,0 +1,75 @@
+import os
+import sys
+from flask import render_template, json, request, Response, Flask, jsonify
+from distutils.version import StrictVersion
+import MySQLdb
+import db
+import flask
+import re
+sys.path.insert(1, os.environ["SANDBOX_TOOLS_LIB"])
+import gnats_pr
+import component_manifest
+import git
+
+app = Flask(__name__)
+db.setUp()
+
+@app.route('/getRelease')
+def routeRelease(): 
+	project = request.args.get('project')
+	releases = db.retrieveReleases(project)
+	data = [{"id": x[0], "name": x[0]} for x in releases]
+	return jsonify(data)
+
+@app.route('/details')
+def details(): 
+	return flask.render_template('/prdetails.html')
+
+@app.route('/', methods=["GET", "POST"])
+def testpage():
+	if flask.request.method == "GET":
+    		return flask.render_template('/testpage.html', projects = db.retrieveProjects(), builds = "")
+	elif flask.request.method == "POST":
+			try:
+				 project = request.form['projects'].replace('+', ' ')
+				 release = request.form['releases'].replace('+', ' ')
+				 return flask.render_template('testpage.html', projects=db.retrieveProjects(), builds = db.retrieveBuilds(release, project))
+			except: 
+				return flask.render_template('testpage.html', projects=db.retrieveProjects())
+@app.route('/prInfo')
+def routePR():
+		build = request.args.get('detailsButton')
+		print build
+		prInfo = db.retrievePRinfo(build)
+		data = [{"pr_number": x[0], "responsible": gnats_pr.GnatsPr(int(x[0])).owner(), "pr_state": gnats_pr.GnatsPr(int(x[0])).state(), "synopsis": gnats_pr.GnatsPr(x[0]).run_query(r'''/usr/local/bin/query-pr --format '"%s" synopsis' ''' + str(x[0]))} for x in prInfo]
+		return jsonify(data)
+
+@app.route('/cmInfo')
+def cmComparison():
+		checked = request.args.get('twoBuilds')
+		checked = checked.split();
+		print checked[0]
+		revision1 = db.retrieveRevision(checked[0]);
+		revision2 = db.retrieveRevision(checked[1]);
+		manifest1 = component_manifest.load_component_manifest_from_history(revision1[0][0])
+		manifest2 = component_manifest.load_component_manifest_from_history(revision2[0][0])
+		print manifest1.get_version()
+		print manifest2.get_version()
+		if (StrictVersion(manifest1.get_version()[-8:]) < StrictVersion(manifest2.get_version()[-8:])):
+			addedRepos = set(manifest2.get_repos()) - set(manifest1.get_repos())
+			removedRepos = set(manifest1.get_repos()) - set(manifest2.get_repos())
+			sharedRepos = set(manifest1.get_repos()) and set(manifest2.get_repos())
+		else: 
+			addedRepos = set(manifest1.get_repos()) - set(manifest2.get_repos())
+			removedRepos = set(manifest2.get_repos()) - set(manifest1.get_repos())
+			sharedRepos = set(manifest1.get_repos()) and set(manifest2.get_repos())
+		
+		print set(manifest1.get_repos())
+		print set(manifest2.get_repos())
+		print "added:" + addedRepos
+		print "removed:" + removedRepos
+		data1 = []
+		data1.append(list(addedRepos))
+		data1.append(list(removedRepos))
+		return json.dumps({"data": data1})
+

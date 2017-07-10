@@ -1,0 +1,29 @@
+.hover_cell:hover {
+    border-color: #428bca;
+}
+
+.container h1 {
+	font-family: 'Droid Serif', serif;
+}
+.hover_cell:hover {
+    border-color: #428bca;
+}
+.red { 
+  color: red;
+}
+.green { 
+  color: green; 
+}
+
+.prDet{ 
+    position: relative;
+    padding: 0;
+    width: 100%;
+    border-color: red;
+}
+.btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
+    background-color: #8064A2 !important;
+}
+.jumbotron {
+		background-color: rgba(246,218,218, 0.4)
+}
