@@ -3,75 +3,113 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/jstree.min.js"></script>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/themes/default/style.min.css" />
+  <link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='styles/rcm.css') }}">
   <script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
-  <style>
-   #line1 { 
-    color: red;
-  }
-  .line2 { 
-    color: green; 
-  }
-  </style>
- <div class = "container">
-	<h1> PR Details </h1>
-	<h3> [Shows the updates made from the previous revision to this one] </h3>
-</div>
-<br> </br>
-<div class = "container">
-	<div class = "jumbotron" id = "jtree">
-  <ul>
-    <li id = "buildname">
-      <ul>
-        <li>Repository: junos-2009/junos/ddl
-        	<ul>
-        		<li> Info: Default application configuration using XAPP DSL </li>
-        		<li> Version: v/master/0.0.47.0 </li>
-        	</ul>
-        </li>
-        <li>Repository: lfmd
-          <ul>
-            <li> Info: Default application configuration using XAPP DSL</li> 
-            <li> Version: v/master/0.0.335.0 </li>
-          </ul>
-          </li>
-        <li class = "line2">Repository: junos-2009/pfe-shared
-        	<ul>
-        		<li> Info: Default application configuration using XAPP DSL </li>
-        		<li> Version: v/master/0.0.33.0 </li>
-        		<li> Status: ADDED
-        	</ul>
-        </li>
-        <li>Repository: libddx-consumer
-        	<ul> 
-        	 <li> Info: Default application configuration using XAPP DSL</li> 
-            <li> Version: v/master/0.0.335.0 </li>
-            </ul>
-        </li>
-        <li id = 'line1'> Repository: ddc-evl
-        	<ul>
-        		<li> Info: Default application configuration using XAPP DSL </li>
-        		<li> Version: v/master/0.0.33.0 </li>
-        		<li> Status: DEPRECATED
-        	</ul></li>
-      </ul>
-    </li>
-  </ul>
-  	</div>
+<div class = "container-fluid">
+<div class = "row row-offcanvas row-offcanvas-left">
+  <div class = "col-xs-12 col-sm-9 col-sm-push-3">
+  <div class = "jumbotron">
+    <h1> PR Details </h1>
   </div>
+  <div class = "row">
+  <div class = "col-md-8">
+  <input type = "text" placeholder = "Find..." class = "text-input" id = "filterBranch" value = "" />
+  <a href = "url_for{{'get_help'}}"> Help </a>
+  <button type = "button" id = "collapseExpand" class = "btn btn-outline-secondary" onclick= "collapseExpandTree()"> Collapse/Expand </button>
+  <br></br>
+  <div id = "jtree">
+  <ul>
+  </ul>
+  </div>
+  </div>
+  </div>
+  </div>
+  <div class = "col-xs-6 col-sm-3 col-sm-pull-9 sidebar-offcanvas" id="sidebar">
+    <div class = "list-group">
+    <a href="#" class = "list-group-item active"> Test </a>
+    <a href="#" class = "list-group-item"> Test2 </a>
+    <a href="#" class= "list-group-item"> Test3 </a>
+    </div>
+</div>
+</div>
+</div>
 	<script>
-	      $(function() {
-        $('#jtree').jstree({
-            "core": {
-              "themes":{
-                "icons":false
-              }
-            }
-        });
-      });
   var urlParameter = new URLSearchParams(window.location.search);
   console.log(window.location.search);
-  document.getElementById("buildname").innerHTML = urlParameter.get('build');
+  function showbuilds(callback) {
+    var html = '<li id = "builds"> <b> Build: </b>';
+    var twoBuilds = '';
+    var counter = 0;
+    var urlParameter = new URLSearchParams(window.location.search);
+    html += urlParameter.get('build');
+    oneBuild = urlParameter.get('build');
+    counter++;
+    var html2 = '';
+    $.getJSON("{{url_for('cmBuild')}}", {oneBuild: oneBuild}, function(data) {
+    $("#jtree").append("<ul>" + html + "</ul>");
+    $('<ul id = "ulAdded" />').appendTo('#jtree #builds');
+    var looprepos = 0;
+    var end = data.data.length - 1;
+    for(var i = 0; i < data.data.length; i++) {
+      var counter = 0;
+      var components = '';
+      var endCounter = data.data[i].repo_components.length 
+      for (var z = 0; z < data.data[i].repo_components.length; z++) {
+        components += "<li class = 'component_green'><b>" +data.data[i].repo_components[z].component_name + "</b>: " + data.data[i].repo_components[z].component_revision + "</li>"
+          counter++;
+      }
+      if (counter == endCounter) {
+        var attributes = ""
+        if (data.data[i].repo_attributes != "") {
+            attributes = "<li>" + data.data[i].repo_attributes + "</li>";
+        }
+        html2 += "<li class = 'green'><b>" + data.data[i].repo_name + "</b>: " + data.data[i].repo_revision + "<ul>" + attributes + components + "</ul></li>"
+        $("#jtree #builds #ulAdded").append(html2)
+      }
+      html2 = '';
+      looprepos++;
+    }
+    callback && callback();
+    });
+  }
+function displayTree(callback) {
+  $('#jtree').jstree( {
+                  "plugins": ["search"],
+                  "search": {"show_only_matches": true, "show_only_matches_children": true},
+                  "core": {
+                    "check_callback": true,
+                    "themes":{
+                    "icons":false
+                  }
+                }
+  });
+  callback && callback();
+}
+  showbuilds(function() { displayTree(); });
+
+
+$(document).ready(function() {
+   var to = false;
+  $("#filterBranch").keyup(function() {
+    if (to) {
+      clearTimeout(to);
+    }
+    to = setTimeout(function() {
+    var v = $("#filterBranch").val();
+    $("#jtree").jstree(true).search(v); }, 250);
+    });
+});
+var counter = 0;
+function collapseExpandTree() {
+  if (counter % 2 == 0) {
+    $('#jtree').jstree("open_all");
+  } else {
+    $('#jtree').jstree("close_all");
+  }
+  counter++;
+}
+
       </script>
 </html>

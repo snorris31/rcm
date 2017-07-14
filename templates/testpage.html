@@ -42,15 +42,18 @@
     </form>
   </div>
   </div>
+ <a href = "url_for{{'get_help'}}" id = "helpButton"> Help </a>
  <div class = "container" id = "diffs" style = "display: none;">
-  <div class = "jumbotron" id = "compare2builds"> 
+  <div class = "jumbotron" id = "innerholder"> 
+  <input type = "text" placeholder = "Find..." class = "text-input" id = "filterTree" value = "" />
+  <div id = "compare2builds">
 	<ul> 
 	</ul>
   </div>
-      <button type = "button" id="postApp" onclick = "hideJumbo()" class = "btn btn-outline-primary" style = "float: right;"> Hide </button>
+      <button type = "button" id="postApp" onclick = "hideJumbo()" class = "btn btn-outline-primary"> Hide </button>
+      <button type = "button" id = "collapseExpand" class = "btn btn-outline-secondary" onclick= "collapseExpandTree()"> Collapse/Expand </button>
   </div>
-
-
+  </div>
   <div class = "container">
   <table class="table">
   <thead class = "thead-inverse">
@@ -63,13 +66,13 @@
     </tr>
     </thead>
     <tbody>
-    {% for build in builds %}
+    {% for build in newBuilds %}
         <th>  <input type="checkbox" name="compare" class = "compare" value={{build[0]}} id={{build[0]}} style = "text-align: center;"> </th>
         <th> <a href= "{{url_for('details', build=build[0])}}"> {{build[0]}} </a></th>
-        <td> {{build[1]}} </td>
         <td> {{build[2]}} </td>
+        <td> {{build[1]}} </td>
         <td> <button type="button" class="btn btn-link" name = "details" data-toggle="collapse" data-target=.{{build[0].replace('.', '_').replace('.','_')}} value = '{{build[0].replace('.', '_').replace('.','_')}}' onclick = "clickedDetails('{{build[0].replace('.', '_').replace('.','_')}}')"> PR Details </button></td>
-		<tr class = "collapse out thisone {{build[0]. replace('.', '_').replace('.','_')}}"></tr>
+		 <tr class = "collapse out thisone {{build[0]. replace('.', '_').replace('.','_')}}"></tr>
      {% endfor %}
     </tbody>
 </table>
@@ -125,7 +128,7 @@ function clickedDetails(button) {
           $("."+ button).addClass("collapse in");
           html2 = '';
         }
-        $(".thisone" + "." + button).append("</div>");
+        //$(".thisone" + "." + button).append("</div>");
       }
       });
       alreadyCalled[button] = 1;
@@ -140,10 +143,6 @@ function clickedDetails(button) {
   var notTheFirst = false;
 
   function showbuilds(callback) {
-    if (notTheFirst == true) {
-      console.log('sup');
-      $('#compare2builds').jstree(true).destroy();
-    }
     var html = '<li id = "builds"> <b> Comparing Builds: </b>';
     var twoBuilds = '';
     var counter = 0;
@@ -156,8 +155,11 @@ function clickedDetails(button) {
       var revisions = '';
       var htmlremoved = '';
       var htmlunchanged = '';
-      //$('#compare2builds').empty(); 
     if (counter == 2) {
+      if (notTheFirst == true) {
+      console.log('sup');
+      $('#compare2builds').jstree(true).destroy();
+      }
     console.log("counter:" + counter); 
     $.getJSON("{{url_for('cmComparison')}}", {twoBuilds: twoBuilds}, function(data) {
     $("#compare2builds").append("<ul>" + html + "</ul>");
@@ -167,35 +169,92 @@ function clickedDetails(button) {
     $('<ul id = "ulAdded" />').appendTo('#compare2builds #builds #groups #added');
     var looprepos = 0;
     var end = (data.data[0].length + data.data[1].length + data.data[2].length) - 1;
+    console.log("end" + end);
     for(var i = 0; i < data.data[0].length; i++) {
-      console.log(data.data[0].length);   
-      html2 += "<li class = 'green'>" + data.data[0][i].repo_name + "<ul><li class = 'green'>" + data.data[0][i].repo_revision + "</li></ul></li>"
-      $("#compare2builds #builds #groups #added #ulAdded").append(html2)
+      var counter = 0;
+      console.log(data.data[0].length);
+      var components = '';
+      var endCounter = data.data[0][i].repo_components.length 
+      for (var z = 0; z < data.data[0][i].repo_components.length; z++) {
+        components += "<li class = 'component_green'><b>" +data.data[0][i].repo_components[z].component_name + "</b>: " + data.data[0][i].repo_components[z].component_revision + "</li>"
+        counter++;
+        }
+      var attributes = "";
+      if (counter == endCounter) {
+          if (data.data[0][i].repo_attributes != "") {
+            attributes = "<li>" + data.data[0][i].repo_attributes + "</li>";
+          }
+          html2 += "<li class = 'green'><b>" + data.data[0][i].repo_name + "</b>: " +  data.data[0][i].repo_revision + "<ul>" + attributes + components + "</ul></li>"
+          $("#compare2builds #builds #groups #added #ulAdded").append(html2)
+      }
       html2 = '';
       looprepos++;
     }
-    //$('<li id = "removed" /> Removed').appendTo('#compare2builds #builds #groups');
     $("#compare2builds #builds #groups").append("<li id = 'removed'> Removed </li>");
     $('<ul id = "ulRemoved" />').appendTo('#compare2builds #builds #groups #removed');
+    console.log("Removed" + data.data[1].length);
     for (var i = 0; i < data.data[1].length; i++) {
-      htmlremoved += "<li class = 'red'>" + data.data[1][i].repo_name + "<ul><li class = 'red'>" + data.data[1][i].repo_revision + "</li></ul></li>";
-      $("#compare2builds #builds #groups #removed #ulRemoved").append(htmlremoved);
+      console.log("Removed" + data.data[1].length);
+      var counter = 0;
+      var components = '';
+      var endCounter = data.data[0][i].repo_components.length 
+      for (var z = 0; z < data.data[1][i].repo_components.length; z++) {
+        components += "<li class = 'component_red'><b>" +data.data[1][i].repo_components[z].component_name + "</b>: " + data.data[0][i].repo_components[z].component_revision + "</li>"
+        counter++;
+        }
+      var attributes = "";
+      if (counter == endCounter) {
+        if (data.data[1][i].repo_attributes != "") {
+            attributes = "<li>" + data.data[1][i].repo_attributes + "</li>";
+        }
+        htmlremoved += "<li class = 'red'><b>" + data.data[1][i].repo_name + "</b>: " + data.data[1][i].repo_revision  + "<ul>" + attributes + components + "</ul></li>";
+        $("#compare2builds #builds #groups #removed #ulRemoved").append(htmlremoved);
+      }
       htmlremoved = '';
+      looprepos++;
     }
     $("#compare2builds #builds #groups").append("<li id = 'modified'> Modified </li>");
     $('<ul id = "ulModified" />').appendTo('#compare2builds #builds #groups #modified');
     for (var i = 0; i < data.data[2].length; i++) {
-      htmlunchanged += "<li>" + data.data[2][i].repo_name + "<ul><li class = 'green'>" + data.data[2][i].repo_revision1 + " --> " + data.data[2][i].repo_revision2 + "</li></ul></li>"
-      $("#compare2builds #builds #groups #modified #ulModified").append(htmlunchanged);
+       var counter = 0;
+      console.log(data.data[0].length);
+      var components = '';
+      var endCounter = data.data[2][i].repo_components[0].length + data.data[2][i].repo_components[1].length + data.data[2][i].repo_components[2].length
+      console.log("end" + endCounter);
+      console.log("this" +data.data[2][i].repo_components[0].length);
+        for (var z = 0; z < data.data[2][i].repo_components[0].length; z++) {
+        components += "<li class = 'component_green'><b>" +data.data[2][i].repo_components[0][z].component_name + "</b>: " + data.data[2][i].repo_components[0][z].component_revision + "</li>";
+          counter++;
+        }
+        for (var z = 0; z < data.data[2][i].repo_components[1].length; z++) {
+          components += "<li class = 'red'><b>" +data.data[2][i].repo_components[1][z].component_name + "</b>: " + data.data[2][i].repo_components[1][z].component_revision + "</li>";
+          counter++;
+        }
+        for (var z = 0; z < data.data[2][i].repo_components[2].length; z++) {
+          components += "<li class = 'component_blue'><b>" +data.data[2][i].repo_components[2][z].component_name + "</b>: " + data.data[2][i].repo_components[2][z].component_revision_old + "-->" + data.data[2][i].repo_components[2][z].component_revision_new + "</li>";
+          counter++;
+        }
+        console.log("counter" + counter);
+        console.log("encCounter" + endCounter);
+        if (counter == endCounter) {
+          console.log(counter);
+          console.log(endCounter);
+          var attributes = "";
+          if (data.data[2][i].repo_attributes != "") {
+            attributes = "<li>" + data.data[2][i].repo_attributes + "</li>";
+          }
+          htmlunchanged += "<li class = 'blue'><b>" + data.data[2][i].repo_name + "</b>: " + data.data[2][i].repo_revision1 + " --> " + data.data[2][i].repo_revision2 + "<ul>" + attributes + components + "</ul></li>"
+        $("#compare2builds #builds #groups #modified #ulModified").append(htmlunchanged);
+      }
       htmlunchanged = '';
+      looprepos++;
     }
     notTheFirst = true;
     callback && callback();
     });
-    }
-    });
-    
   }
+  });
+}
 $(document).on('load', function() {
       $('.collapse').on('show.bs.collapse', function () {
         $('.collapse.in').collapse('hide');
@@ -214,30 +273,79 @@ $(document).on('load', function() {
       });
 });
 function displayTree(callback) {
-  console.log("I'M HAPPENING");
-  //$.getJSON("{{url_for('cmComparison')}}", {twoBuilds: twoBuilds}, function(data) {
-     //var html = '<li id = "builds"> <b> Comparing Builds: </b>';
   $('#compare2builds').jstree( {
+                  "plugins": ["search"],
+                  "search": {"show_only_matches": true, "show_only_matches_children": true},
                   "core": {
-                    //"data": []
                     "check_callback": true,
                     "themes":{
                     "icons":false
                   }
                 }
   });
-  //$('#compare2builds').jstree(true).refresh();
   callback && callback();
-
 }
 
 function showBlock() {
-    console.log("hi");
     document.getElementById("diffs").style.display = "block";
 }
-
-  </script>
+$(document).ready(function() {
+   var to = false;
+  $("#filterTree").keyup(function() {
+    if (to) {
+      clearTimeout(to);
+    }
+    to = setTimeout(function() {
+    var v = $("#filterTree").val();
+    $("#compare2builds").jstree(true).search(v); }, 250);
+    });
+})
+var counter = 0;
+function collapseExpandTree() {
+  if (counter % 2 == 0) {
+    $('#compare2builds').jstree("open_all");
+  } else {
+    $('#compare2builds').jstree("close_all");
+  }
+  counter++;
 }
+/*$(document).ready(function() {
+  $("#filterTree").keyup(function() {
+    $('#compare2builds'.jstree("open_all"))
+    var filter = $(this).val()
+    console.log(filter);
+    $("#compare2builds #builds ul #added ul li").each(function() {
+      if ($(this).text().search(new RegExp(filter, "i")) < 0) {
+        $(this).fadeOut();
+      } else {
+        $(this).show();
+      }
+    });
+    $("#compare2builds #builds ul #removed ul li").each(function() {
+      if ($(this).text().search(new RegExp(filter, "i")) < 0) {
+        $(this).fadeOut();
+      } else {
+        $(this).show();
+      }
+    });
+    $("#compare2builds #builds ul #removed  li").each(function() {
+      if ($(this).text().search(new RegExp(filter, "i")) < 0) {
+        $(this).fadeOut();
+      } else {
+        $(this).show();
+      }
+    });
+    $("#compare2builds #builds ul #modified ul li ul").each(function() {
+      if ($(this).text().search(new RegExp(filter, "i")) < 0) {
+        $(this).fadeOut();
+      } else {
+        $(this).show();
+      }
+    });
+  });
+});*/
+
+</script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/jstree.min.js"></script>
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/themes/default/style.min.css" />
 </body>

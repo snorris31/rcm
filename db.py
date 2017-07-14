@@ -43,9 +43,13 @@ def retrieveReleases(project):
 	return cursor.fetchall()
 
 def retrieveBuilds(release, project):
+	print release
+	print project
 	query = "SELECT build_name, build_path, build_state FROM builds WHERE release_name = %s AND project_name = %s"
 	cursor.execute(query, (release, project))
-	return cursor.fetchall()
+	thisone = cursor.fetchall()
+	print thisone
+	return thisone
 
 def retrieveBuild(build):
 	query = "SELECT build_name, build_path, build_state FROM builds WHERE build_name = %s"
@@ -68,5 +72,3 @@ def retrieveCM(cm_hash):
 	query = "SELECT cm_blob from revision WHERE commit_number = %s"
 	cursor.execute(query, (cm_hash,))
 	return cursor.fetchall()
-
-
